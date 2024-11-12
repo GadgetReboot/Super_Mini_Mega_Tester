@@ -1,0 +1,36 @@
+### Footprint positions - created on 2024-11-11T20:53:24-0500 ###
+### Printed by KiCad version 8.0.5
+## Unit = mm, Angle = deg.
+## Side : All
+# Ref     Val                   Package                                                                    PosX       PosY       Rot  Side
+C1        4.7uF                 CP_Radial_D5.0mm_P2.50mm                                                43.3508   -30.3900  180.0000  top
+C2        100nF                 C_Disc_D3.8mm_W2.6mm_P2.50mm                                            39.0660   -81.1520  -90.0000  top
+C3        100nF                 C_Disc_D3.8mm_W2.6mm_P2.50mm                                            61.6270   -81.4060  -90.0000  top
+C4        100nF                 C_Disc_D3.8mm_W2.6mm_P2.50mm                                            90.0420  -120.6630    0.0000  top
+C5        100nF                 C_Disc_D3.8mm_W2.6mm_P2.50mm                                            95.8980   -84.2640  180.0000  top
+C6        100nF                 C_Disc_D3.8mm_W2.6mm_P2.50mm                                            99.0060   -81.7250  -90.0000  top
+C7        100nF                 C_Disc_D3.8mm_W2.6mm_P2.50mm                                           122.4190   -97.4730  -90.0000  top
+C8        100nF                 C_Disc_D3.8mm_W2.6mm_P2.50mm                                            71.6960   -35.3820  180.0000  top
+C9        100nF                 C_Disc_D3.8mm_W2.6mm_P2.50mm                                            68.2090   -54.4240   90.0000  top
+D1        LED_Small_ALT         LED_D5.0mm                                                              74.6990   -30.9600    0.0000  top
+J1        Conn_01x05            PinHeader_1x05_P2.54mm_Vertical                                         47.3620   -28.6560   90.0000  top
+J2        Conn_02x20_Odd_Even   PinHeader_2x20_P2.54mm_Vertical                                         54.7710   -60.8710    0.0000  top
+J3        Conn_02x20_Odd_Even   PinHeader_2x20_P2.54mm_Vertical                                        115.1580   -60.8630    0.0000  top
+J4        Conn_01x04            PinHeader_1x04_P2.54mm_Vertical                                         98.4050   -28.6380   90.0000  top
+J5        Conn_01x05            PinHeader_1x05_P2.54mm_Vertical                                         53.5850   -53.5970   90.0000  top
+Q1        2N7000                TO-92_Inline                                                            73.9250   -53.0540  180.0000  top
+Q2        2N7000                TO-92_Inline                                                            80.6250   -52.9700  180.0000  top
+R1        680r                  R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal                       82.7580   -49.5600   90.0000  top
+R2        10K                   R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal                       69.2160   -49.5990   90.0000  top
+R3        10K                   R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal                       72.6570   -39.4280  -90.0000  top
+R4        10K                   R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal                       75.9190   -49.5990   90.0000  top
+R5        10K                   R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal                       79.3340   -39.4390  -90.0000  top
+R6        10K                   R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal                       92.5800   -97.6930   90.0000  top
+SW1       RotaryEncoder_Switch  RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm_CircularMountingHoles   125.6740   -44.2150   90.0000  top
+U1        ESP32-C3-Super-Mini   ESP32C3_Super_Mini                                                      42.0890   -42.6200  -90.0000  top
+U2        MCP23017_SP           DIP-28_W7.62mm                                                          41.9640   -60.7350    0.0000  top
+U3        MCP23017_SP           DIP-28_W7.62mm                                                          64.5310   -60.7850    0.0000  top
+U4        MCP23017_SP           DIP-28_W7.62mm                                                          69.6670  -117.4820   90.0000  top
+U5        MCP23017_SP           DIP-28_W7.62mm                                                         102.1220   -60.8330    0.0000  top
+U6        MCP23017_SP           DIP-28_W7.62mm                                                         125.3580   -76.4830    0.0000  top
+## End

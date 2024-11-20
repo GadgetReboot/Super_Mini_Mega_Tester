@@ -1,11 +1,16 @@
 /*
-  ESP Mega Tester
+  ESP32-C3 Mega Tester
   Can be used to test cables up to 40 pins at a time
 
   used Arduino IDE 2.3.3
+  board file: esp32 3.0.7 by Espressif Systems
   Adafruit mcp23017 library 2.3.2
   Adafruit ssd1306 2.5.11
-  Adafruit GFX 1.11.10
+  Adafruit GFX 1.11.10  
+
+  Tools menu customized settings:
+  Board: "ESP32C3 Dev Module"
+  USB CDC on boot: Enabled    (for serial monitor access?)
 
   Adapted from a project by youtube.com/@AnotherMaker
          Original concept: https://www.youtube.com/watch?v=Qd_1GTdlSL4
@@ -170,8 +175,8 @@ const int debugDelay = 1;              // delay while accessing mcp23017's to te
 
 // array elements [0..39] correspond to header test pins [1..40]
 // each element [0..39] represents a cable pin on the Output header side
-// the number contained in each element represents a pin number
-// that a cable pin is mapped to on the Input side of the cable
+// the number contained in each element represents a pin number that a cable pin is 
+// mapped to on the Input side of the cable
 // testPinMap[0] = 5  means Output pin 1 (array element 0) maps to Input pin 5
 // testPinMap[4] = 1  means Output pin 5 (array element 4) maps to Input pin 1
 // therefore the cable being tested has a crossover wire connection from pin 1 to 5 and pin 5 to 1
@@ -201,12 +206,13 @@ Menu mm("Rotate for Options");   // root menu text displayed
 MenuItem mm_mi1("Test 1/4 TS");  // menu choices available by moving encoder knob
 MenuItem mm_mi2("Test RJ45");
 MenuItem mm_mi3("Test RJ12");
+MenuItem mm_mi4("Test USB-C");
 boolean menuSelected = false;  // no menu item has been selected
 
 void setup() {
 
   Serial.begin(115200);
-  delay(1000);          // the ESP32-C3 seemed to need a delay or it would appear to hang...
+  delay(1000);  // the ESP32-C3 seemed to need a delay or it would appear to hang...
   Serial.println();
   Serial.println("ESP Mega Tester!");
   Serial.println();
@@ -226,6 +232,7 @@ void setup() {
   mm.add_item(&mm_mi1, &on_item1_selected);
   mm.add_item(&mm_mi2, &on_item2_selected);
   mm.add_item(&mm_mi3, &on_item3_selected);
+  mm.add_item(&mm_mi4, &on_item4_selected);
   ms.set_root_menu(&mm);
 
   display.setTextSize(1);
@@ -332,9 +339,22 @@ void on_item3_selected(MenuItem* p_menu_item) {
   displayMenu();  // redraw menu to current selection
 }
 
-// old test function to run all 40 pins 
+void on_item4_selected(MenuItem* p_menu_item) {
+  display.clearDisplay();
+  display.setCursor(0, 1);
+  display.setTextSize(1);
+  display.print("Running Test...");
+  display.display();
+  Serial.println("Running Test...");
+
+  cableTest_USBC();  // run test
+
+  displayMenu();  // redraw menu to current selection
+}
+
+// old test function to run all 40 pins
 /*
-  void on_item4_selected(MenuItem* p_menu_item) {
+  void on_item5_selected(MenuItem* p_menu_item) {
   display.clearDisplay();
   display.setCursor(0, 1);
   display.setTextSize(1);
@@ -380,7 +400,7 @@ void cableTest_TS() {
   for (int i = 0; i < 40; i++) {
     if (testPinMap[i] != 255) {  // only test mapped pins
       Serial.print(i + 1);
-      Serial.print(" ");
+      Serial.print("...");
       testPinContinuity(i, testPinMap[i], testShorts);  // test the current pin against the mapped target pin
     }
   }
@@ -430,7 +450,7 @@ void cableTest_RJ12() {
 
 // test an 8 pin RJ45 cable
 // Output header side: jack plugged into IO pins 1 to 8
-// Input header side: jack plugged into IO pins 32 to 39
+// Input header side: jack plugged into IO pins 32 to 39 (the breakout board has a shield pin not being tested)
 void cableTest_RJ45() {
 
   resetTestResults();  // clear test data arrays before starting a new test
@@ -462,6 +482,52 @@ void cableTest_RJ45() {
       testPinContinuity(i, testPinMap[i], testShorts);  // test the current pin against the mapped target pin
     }
   }
+  Serial.println();
+  Serial.println();
+  debugPrintTestResults();  // show how the data arrays are getting configured for debugging
+  Serial.println();
+  showTestResults();  // show test results on serial monitor and oled, waiting for user to click encoder button
+  Serial.println("Test Complete");
+}
+
+// test 6 pins of a USB-C cable
+// Output header side: connector breakout board plugged into pins 1 to 6
+// Input header side: connector breakout board plugged into pins 35 to 40
+void cableTest_USBC() {
+
+  resetTestResults();  // clear test data arrays before starting a new test
+  resetPinMap();       // clear pin mapping before setting up a test
+
+  debugPrintTestResults();  // show how the data arrays are getting configured for debugging
+  Serial.println();
+
+  // set up a pin 1:1 mapping to test VBUS, GND, D+, D- (not CC1 or CC2)
+  // using a specific USB-C breakout header
+  testPinMap[0] = 35;
+  testPinMap[1] = 36;
+  testPinMap[3] = 38;
+  testPinMap[4] = 39;
+  // cc1 and cc2 pins would be located on the breakout headers at
+  // pin 2 and 5 on 40 pin Output header
+  // pin 37 and 40 on 40 pin Input header
+  // testing those requires custom functions to check all possible combinations of
+  // cc1 or cc2 on one end of the cable mapping to cc1 or cc2 on the other end,
+  // depending which orientation each side is plugged in, so for now it is omitted
+
+  debugPrintTestResults();  // show how the data arrays are getting configured for debugging
+  Serial.println();
+
+  // test mapped pins and check for shorts in addition to opens
+  Serial.print("Testing pin: ");
+  boolean testShorts = false;  // don't bother testing shorts because breakout board has 5.1K pull downs on CC pins
+  for (int i = 0; i < 40; i++) {
+    if (testPinMap[i] != 255) {  // only test mapped pins
+      Serial.print(i + 1);
+      Serial.print(" ");
+      testPinContinuity(i, testPinMap[i], testShorts);  // test the current pin against the mapped target pin
+    }
+  }
+
   Serial.println();
   Serial.println();
   debugPrintTestResults();  // show how the data arrays are getting configured for debugging
@@ -946,8 +1012,8 @@ void resetPinMap() {
 // print a text string on oled at specified coordinates
 /* This started crashing on the original Nano hardware.
   Maybe it would work if used again on ESP hardware but not tested yet.
-  Resorting to manually pasting the function code where needing to
-  call the function is the workaround*/
+  Resorting to manually pasting this function code where needed
+*/
 /*
   void displayString(String text, int x, int y) {
   display.setCursor(x, y);
@@ -974,7 +1040,7 @@ void showTestResults() {
       Serial.print(" ");
       String s = "Fail Open:" + String(i) + "        ";
       // display message on oled
-      display.setCursor(0, textLine4);
+      display.setCursor(0, textLine3);
       display.setTextSize(1);
       display.print(s);
       display.display();
@@ -991,7 +1057,7 @@ void showTestResults() {
       Serial.print(" ");
       String s = "Fail Short:" + String(i) + "        ";
       // display message on oled
-      display.setCursor(0, textLine4);
+      display.setCursor(0, textLine3);
       display.setTextSize(1);
       display.print(s);
       display.display();
@@ -1013,7 +1079,6 @@ void showTestResults() {
     display.setTextSize(1);
     display.print("Click Encoder To Exit");
     display.display();
-
 
     while (!buttonClicked) {
       // check if encoder button is pressed
@@ -1050,37 +1115,34 @@ void showTestResults() {
             testBufIdx = 0;        // reset index when all open faults are reported
             showNextFault = true;  // all open pins were reported, show short faults or re-start opens
 
-              if (!testPassShort) failTypeIdx = 1;  // switch to reporting short failures if there are any
-            
+            if (!testPassShort) failTypeIdx = 1;  // switch to reporting short failures if there are any
           }
         }  // end if failTypeIdx==0
 
-                if (failTypeIdx == 1) {           // if reporting short failures, check for them and show them
-                  for (int i = testBufIdx; i < 40; i++) {
-                    if ((testResultShort[i] != 0) && (testResultShort[i] != 255)) {    // if this pin has a short fault
-                      showNextFault = false;            // if a fault is found, wait for display timeout before showing next one
-                      display.setCursor(0, textLine3);
-                      display.setTextSize(1);
-                      display.print("Fail Short ");
-                      display.print(i + 1);             // show the failed IO pin number
-                      display.print("   ");
-                      display.display();
-                      delay(displayDelayShort);
-                      break;  // stop checking for errors if one is found on this short fault report cycle
-                    }
-                  }
-                  testBufIdx++;                           // increment to next test buffer item
-                  if (testBufIdx == 40) {
-                    testBufIdx = 0;                       // reset index when all open faults are reported
-                    showNextFault = true;                 // all open pins were reported, show short faults or re-start opens
-                    Serial.println("Breakpoint testbuf=40");
-                    if (!testPassOpen) failTypeIdx = 0;  // switch to reporting open failures if there are any
-                  }
-                } // end if failTypeIdx==1
-
-      }   // end if showNextFault
-    }     // end while !buttonClicked
-  } else  // show test pass message if there are no failures detected
+        if (failTypeIdx == 1) {  // if reporting short failures, check for them and show them
+          for (int i = testBufIdx; i < 40; i++) {
+            if ((testResultShort[i] != 0) && (testResultShort[i] != 255)) {  // if this pin has a short fault
+              showNextFault = false;                                         // if a fault is found, wait for display timeout before showing next one
+              display.setCursor(0, textLine3);
+              display.setTextSize(1);
+              display.print("Fail Short ");
+              display.print(testResultShort[i]);  // show the failed IO pin number
+              display.print("   ");
+              display.display();
+              delay(displayDelayShort);
+              break;  // stop checking for errors if one is found on this short fault report cycle
+            }
+          }
+          testBufIdx++;  // increment to next test buffer item
+          if (testBufIdx == 40) {
+            testBufIdx = 0;                      // reset index when all open faults are reported
+            showNextFault = true;                // all open pins were reported, show short faults or re-start opens
+            if (!testPassOpen) failTypeIdx = 0;  // switch to reporting open failures if there are any
+          }
+        }  // end if failTypeIdx==1
+      }    // end if showNextFault
+    }      // end while !buttonClicked
+  } else   // show test pass message if there are no failures detected
   {
     Serial.println("Test Pass");
     display.setCursor(0, textLine3);
@@ -1088,6 +1150,18 @@ void showTestResults() {
     display.print("Test Pass");
     display.display();
     delay(displayDelayLong);
-  }
-  // end if !testPassOpen or Short
+  }  // end if !testPassOpen/Short
 }  // end showTestResults
+
+/* Notes
+- Can dynamically allocate arrays the size of number of pins being tested instead of always using 40 elements
+  int* myArray = (int*)malloc(numberOfElements * sizeof(int));
+  instead of
+  int myArray[40];
+  But...on Arduino are there any gotcha's regarding manual resource clean up and possible stack/heap crashes?
+
+ - encoder button not responsive when clicking to exit test due to how it is coded but it was just taken from some other
+   old online example to get something working for now
+ - when the test report is showing pin faults on OLED the timing of text showing up is non linear due to the brute force
+   way the reporting function scans through test data arrays and digs out the info to report. Can be fixed if too annoying
+*/

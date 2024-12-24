@@ -656,7 +656,7 @@ void testPinContinuity(byte firstPin, byte secondPin, boolean testShorts) {
       break;
     case 17:
       mcp3.pinMode(output17, OUTPUT);   // set test pin as output
-      mcp3.digitalWrite(output7, LOW);  // set output low
+      mcp3.digitalWrite(output17, LOW);  // set output low
       break;
     case 18:
       mcp3.pinMode(output18, OUTPUT);    // set test pin as output

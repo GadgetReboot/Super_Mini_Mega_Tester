@@ -173,17 +173,17 @@ const int testDisplayDelay = 10;       // delay while showing test result text o
 const int pinFaultDisplayDelay = 500;  // delay while showing list of pin failures
 const int debugDelay = 1;              // delay while accessing mcp23017's to test for timing issues
 
-// array elements [0..39] correspond to header test pins [1..40]
-// each element [0..39] represents a cable pin on the Output header side
+// array elements [1..40] correspond to header test pins [1..40]
+// each element [1..40] represents a cable pin on the Output header side
 // the number contained in each element represents a pin number that a cable pin is
 // mapped to on the Input side of the cable
-// testPinMap[0] = 5  means Output pin 1 (array element 0) maps to Input pin 5
-// testPinMap[4] = 1  means Output pin 5 (array element 4) maps to Input pin 1
+// testPinMap[1] = 5  means Output pin 1 maps to Input pin 5
+// testPinMap[5] = 1  means Output pin 5 maps to Input pin 1
 // therefore the cable being tested has a crossover wire connection from pin 1 to 5 and pin 5 to 1
-byte testPinMap[40];       // array to map Output pins (testPinMap[xx]) to Input pins (the value of xx)
-byte testResultOpen[40];   // array to note which Output pins tested as open circuit
-byte testResultShort[40];  // array to note which Output pins tested as shorted or miswired somewhere else
-byte testBufIdx = 0;       // index for moving through testResultShort buffer within sketch
+byte testPinMap[41];       // array to map Output pins (testPinMap[xx]) to Input pins (the value of xx)
+byte testResultOpen[41];   // array to note which Output pins tested as open circuit
+byte testResultShort[41];  // array to note which Output pins tested as shorted or miswired somewhere else
+byte testBufIdx = 1;       // index for moving through testResultShort buffer within sketch
 
 // Encoder Pins
 const int PinCLK = 0;  // Used for generating interrupts using CLK signal
@@ -209,7 +209,7 @@ MenuItem mm_mi2("Test RJ45");
 MenuItem mm_mi3("Test RJ12");
 MenuItem mm_mi4("Test USB-C");
 // example for adding more tests
-// MenuItem mm_mi5("Test 2 22 40");  // menu text for the new test
+MenuItem mm_mi5("Test Example");  // menu text for the new test
 
 
 
@@ -238,7 +238,7 @@ void setup() {
   mm.add_item(&mm_mi3, &on_item3_selected);
   mm.add_item(&mm_mi4, &on_item4_selected);
   // example for adding more tests
-  // mm.add_item(&mm_mi5, &on_item5_selected);  // function to call when a menu item is chosen
+  mm.add_item(&mm_mi5, &on_item5_selected);  // function to call when a menu item is chosen
 
   ms.set_root_menu(&mm);
 
@@ -360,7 +360,6 @@ void on_item4_selected(MenuItem* p_menu_item) {
 }
 
 // example for adding more tests
-/*
 void on_item5_selected(MenuItem* p_menu_item) {
   display.clearDisplay();
   display.setCursor(0, 1);
@@ -369,11 +368,11 @@ void on_item5_selected(MenuItem* p_menu_item) {
   display.display();
   Serial.println("Running Test...");
 
-  cableTest_2_22_40();  // run test
+  cableTest_Example();  // run test
 
   displayMenu();  // redraw menu to current selection
 }
-*/
+
 
 
 // old test function to run all 40 pins
@@ -398,11 +397,10 @@ void on_item5_selected(MenuItem* p_menu_item) {
  ************************************/
 
 // example for adding more tests
-/*
+
 // example test showing how to set up the pin numbers to test
-// Output header side: wires plugged into IO pins 2, 22, 40
-// Input header side: wires plugged into IO pins 2, 22, 40
-void cableTest_2_22_40() {
+// Output to Input header connections to test are: Pin 1 out to Pin 3 in, Pin 2 out to Pin 5 in, Pin 10 out to Pin 10 in
+void cableTest_Example() {
 
   resetTestResults();  // clear test data arrays before starting a new test
   resetPinMap();       // clear pin mapping before setting up a test
@@ -411,14 +409,12 @@ void cableTest_2_22_40() {
   Serial.println();
 
   // set up a pin test mapping for header pins being tested.
-  // the output header pin is located in the square brackets eg testPinMap[0]
+  // the output header pin is located in the square brackets eg testPinMap[2]
   // the input header pin is after the equals sign
-  // the numbers used here must be the header pin number minus one because 
-  // the headers are numbered 1 through 40 but in software the data gets accessed as 0 to 39
-  // so testPinMap[0] = 5 would mean output header pin 1 is connected to input header pin 6
-  testPinMap[1] = 1;     // output header pin 2 connects to input header pin 2
-  testPinMap[21] = 21;   // output header pin 22 connects to input header pin 22
-  testPinMap[39] = 39;   // output header pin 40 connects to input header pin 40
+  // so testPinMap[1] = 3 would mean output header pin 1 is connected to input header pin 3
+  testPinMap[1] = 3;    // output header pin 1 connects to input header pin 3
+  testPinMap[2] = 5;    // output header pin 2 connects to input header pin 5
+  testPinMap[10] = 10;  // output header pin 10 connects to input header pin 10
 
   debugPrintTestResults();  // show how the data arrays are getting configured for debugging
   Serial.println();
@@ -426,9 +422,9 @@ void cableTest_2_22_40() {
   // test mapped pins and check for shorts in addition to opens
   Serial.print("Testing pin: ");
   boolean testShorts = true;
-  for (int i = 0; i < 40; i++) {
+  for (int i = 1; i <= 40; i++) {
     if (testPinMap[i] != 255) {  // only test mapped pins
-      Serial.print(i + 1);
+      Serial.print(i);
       Serial.print(" ");
       testPinContinuity(i, testPinMap[i], testShorts);  // test the current pin against the mapped target pin
     }
@@ -440,7 +436,7 @@ void cableTest_2_22_40() {
   showTestResults();  // show test results on serial monitor and oled, waiting for user to click encoder button
   Serial.println("Test Complete");
 }
-*/
+
 
 
 
@@ -460,9 +456,9 @@ void cableTest_TS() {
   Serial.println();
 
   // set up a 2 pin 1:1 cable pin mapping to test based on where the jacks are plugged in
-  testPinMap[0] = 35;  // Sleeve is pin 1 (data array element 0) on Output and pin 35 on Input headers
-  testPinMap[1] = 35;  // TRS jack Ring pin will bridge to mono plug Sleeve, so map that as a valid connection
-  testPinMap[2] = 37;
+  testPinMap[1] = 35;  // Sleeve is pin 1 on Output and pin 35 on Input headers
+  testPinMap[2] = 35;  // TRS jack Ring pin will bridge to mono plug Sleeve, so map that as a valid connection
+  testPinMap[3] = 37;
 
   debugPrintTestResults();  // show how the data arrays are getting configured for debugging
   Serial.println();
@@ -470,9 +466,9 @@ void cableTest_TS() {
   // test mapped pins and check for shorts in addition to opens
   Serial.print("Testing pin: ");
   boolean testShorts = true;
-  for (int i = 0; i < 40; i++) {
+  for (int i = 1; i <= 40; i++) {
     if (testPinMap[i] != 255) {  // only test mapped pins
-      Serial.print(i + 1);
+      Serial.print(i);
       Serial.print("...");
       testPinContinuity(i, testPinMap[i], testShorts);  // test the current pin against the mapped target pin
     }
@@ -497,8 +493,8 @@ void cableTest_RJ12() {
   Serial.println();
 
   // set up a 2 pin 1:1 cable pin mapping to test based on where the jacks are plugged in
-  testPinMap[2] = 37;
-  testPinMap[3] = 38;
+  testPinMap[3] = 37;
+  testPinMap[4] = 38;
 
   debugPrintTestResults();  // show how the data arrays are getting configured for debugging
   Serial.println();
@@ -506,9 +502,9 @@ void cableTest_RJ12() {
   // test mapped pins and check for shorts in addition to opens
   Serial.print("Testing pin: ");
   boolean testShorts = true;
-  for (int i = 0; i < 40; i++) {
+  for (int i = 1; i <= 40; i++) {
     if (testPinMap[i] != 255) {  // only test mapped pins
-      Serial.print(i + 1);
+      Serial.print(i);
       Serial.print(" ");
       testPinContinuity(i, testPinMap[i], testShorts);  // test the current pin against the mapped target pin
     }
@@ -533,14 +529,14 @@ void cableTest_RJ45() {
   Serial.println();
 
   // set up an 8 pin 1:1 cable pin mapping to test based on where the jacks are plugged in
-  testPinMap[0] = 32;
-  testPinMap[1] = 33;
-  testPinMap[2] = 34;
-  testPinMap[3] = 35;
-  testPinMap[4] = 36;
-  testPinMap[5] = 37;
-  testPinMap[6] = 38;
-  testPinMap[7] = 39;
+  testPinMap[1] = 32;
+  testPinMap[2] = 33;
+  testPinMap[3] = 34;
+  testPinMap[4] = 35;
+  testPinMap[5] = 36;
+  testPinMap[6] = 37;
+  testPinMap[7] = 38;
+  testPinMap[8] = 39;
 
   debugPrintTestResults();  // show how the data arrays are getting configured for debugging
   Serial.println();
@@ -548,9 +544,9 @@ void cableTest_RJ45() {
   // test mapped pins and check for shorts in addition to opens
   Serial.print("Testing pin: ");
   boolean testShorts = true;
-  for (int i = 0; i < 40; i++) {
+  for (int i = 1; i <= 40; i++) {
     if (testPinMap[i] != 255) {  // only test mapped pins
-      Serial.print(i + 1);
+      Serial.print(i);
       Serial.print(" ");
       testPinContinuity(i, testPinMap[i], testShorts);  // test the current pin against the mapped target pin
     }
@@ -576,14 +572,11 @@ void cableTest_USBC() {
 
   // set up a pin 1:1 mapping to test VBUS, GND, D+, D- (not CC1 or CC2)
   // using a specific USB-C breakout header
-  testPinMap[0] = 35;
-  testPinMap[1] = 36;
-  testPinMap[3] = 38;
-  testPinMap[4] = 39;
-  // cc1 and cc2 pins would be located on the breakout headers at
-  // pin 2 and 5 on 40 pin Output header
-  // pin 37 and 40 on 40 pin Input header
-  // testing those requires custom functions to check all possible combinations of
+  testPinMap[1] = 35;
+  testPinMap[2] = 36;
+  testPinMap[4] = 38;
+  testPinMap[5] = 39;
+  // testing cc1/cc2 requires custom functions to check all possible combinations of
   // cc1 or cc2 on one end of the cable mapping to cc1 or cc2 on the other end,
   // depending which orientation each side is plugged in, so for now it is omitted
 
@@ -593,9 +586,9 @@ void cableTest_USBC() {
   // test mapped pins and check for shorts in addition to opens
   Serial.print("Testing pin: ");
   boolean testShorts = false;  // don't bother testing shorts because breakout board has 5.1K pull downs on CC pins
-  for (int i = 0; i < 40; i++) {
+  for (int i = 1; i <= 40; i++) {
     if (testPinMap[i] != 255) {  // only test mapped pins
-      Serial.print(i + 1);
+      Serial.print(i);
       Serial.print(" ");
       testPinContinuity(i, testPinMap[i], testShorts);  // test the current pin against the mapped target pin
     }
@@ -619,9 +612,9 @@ void cableTest40Pins() {
   debugPrintTestResults();  // show how the data arrays are getting configured for debugging
   Serial.println();
 
-  // set up a 40 pin 1:1 cable pin mapping to test, mapping [0..39] to [1..40] array vs pin #
-  for (int i = 0; i < 40; i++) {
-    testPinMap[i] = i + 1;
+  // set up a 40 pin 1:1 cable pin mapping to test
+  for (int i = 1; i <= 40; i++) {
+    testPinMap[i] = i;
   }
 
   debugPrintTestResults();  // show how the data arrays are getting configured for debugging
@@ -630,9 +623,9 @@ void cableTest40Pins() {
   // test mapped pins and check for shorts in addition to opens
   Serial.print("Testing pin: ");
   boolean testShorts = true;
-  for (int i = 0; i < 40; i++) {
+  for (int i = 1; i <= 40; i++) {
     if (testPinMap[i] != 255) {  // only test mapped pins
-      Serial.print(i + 1);
+      Serial.print(i);
       Serial.print(" ");
       testPinContinuity(i, testPinMap[i], testShorts);  // test the current pin against the mapped target pin
     }
@@ -654,8 +647,8 @@ void cableTest40Pins() {
 
 void testPinContinuity(byte firstPin, byte secondPin, boolean testShorts) {
 
-  // pins to test, constrained within 1 to 40
-  byte sourcePin = constrain((firstPin + 1), 1, 40);  // +1 offset added to let [0.39] array match cable [1..40] pin #
+  // pins to test, constrained within 1 to 40 in case out of range numbers are assigned to pin numbers
+  byte sourcePin = constrain((firstPin), 1, 40);
   byte destPin = constrain((secondPin), 1, 40);
 
   delay(debugDelay);        // tweaking while debugging, isn't apparently needed
@@ -831,17 +824,17 @@ void testPinContinuity(byte firstPin, byte secondPin, boolean testShorts) {
   // second (mapped) test pin to see if it is receiving the asserted signal
   boolean result = checkPinAsserted(destPin);
   if (!result) {
-    testResultOpen[sourcePin - 1] = sourcePin;  // log this pin as an open pin failure
-  } else testResultOpen[sourcePin - 1] = 0;     // log this pin as successful test
+    testResultOpen[sourcePin] = sourcePin;  // log this pin as an open pin failure
+  } else testResultOpen[sourcePin] = 0;     // log this pin as successful test
 
   // to check for possible short circuits between pins or miswired pins (other pins being asserted unexpectedly),
   // check all input pins to see if any other than the expected pin (destPin)
   // are asserted, indicating a wire connection error or shorted pin
   if (testShorts) {
-    for (byte i = 0; i < 40; i++) {                // cycle through all 40 pins
-      boolean checkPin = checkPinAsserted(i + 1);  // check if pin is asserted
-      if (checkPin && (i + 1) != destPin) {        // test for shorts, ignoring the pin it's supposed to be mapped to
-        testResultShort[testBufIdx] = sourcePin;   // log pin as short/miswiring failure
+    for (byte i = 1; i <= 40; i++) {              // cycle through all 40 pins
+      boolean checkPin = checkPinAsserted(i);     // check if pin is asserted
+      if (checkPin && i != destPin) {             // test for shorts, ignoring the pin it's supposed to be mapped to
+        testResultShort[testBufIdx] = sourcePin;  // log pin as short/miswiring failure
         testBufIdx++;
       }
     }
@@ -1011,19 +1004,19 @@ void displayMenu() {
 // 0 means no failure, 1..40 means a pin with a failure, 255 means pin not being tested
 void debugPrintTestResults() {
   Serial.print("Test Pin Map Array Data: ");
-  for (int i = 0; i < 40; i++) {
+  for (int i = 1; i <= 40; i++) {
     Serial.print(testPinMap[i]);
     Serial.print(" ");
   }
   Serial.println();
   Serial.print("Open Test Pin Array Data: ");
-  for (int i = 0; i < 40; i++) {
+  for (int i = 1; i <= 40; i++) {
     Serial.print(testResultOpen[i]);
     Serial.print(" ");
   }
   Serial.println();
   Serial.print("Short Test Pin Array Data: ");
-  for (int i = 0; i < 40; i++) {
+  for (int i = 1; i <= 40; i++) {
     Serial.print(testResultShort[i]);
     Serial.print(" ");
   }
@@ -1068,8 +1061,8 @@ void checkEncoderRotation() {
 
 // clear test result array data before starting a new test
 void resetTestResults() {
-  for (int i = 0; i < 40; i++) {
-    testBufIdx = 0;           // start at beginning of test data buffer when starting new tests
+  for (int i = 1; i <= 40; i++) {
+    testBufIdx = 1;           // start at beginning of test data buffer when starting new tests
     testResultOpen[i] = 255;  // 255 means pin wasn't tested so there is no result to report
     testResultShort[i] = 255;
   }
@@ -1077,7 +1070,7 @@ void resetTestResults() {
 
 // clear test pin mapping before setting up a new test
 void resetPinMap() {
-  for (int i = 0; i < 40; i++) {
+  for (int i = 1; i <= 40; i++) {
     testPinMap[i] = 255;  // 255 means pin isn't mapped and won't be tested
   }
 }
@@ -1106,7 +1099,7 @@ void showTestResults() {
   // show test results on serial monitor and
   // check if there are any failures to report
   Serial.print("Pins not connected as expected in pin mapping: ");
-  for (int i = 0; i < 40; i++) {
+  for (int i = 1; i <= 40; i++) {
     if ((testResultOpen[i] != 0) && (testResultOpen[i] != 255)) {
       testPassOpen = false;  // indicate test has failed
       Serial.print(testResultOpen[i]);
@@ -1123,7 +1116,7 @@ void showTestResults() {
   Serial.println();
 
   Serial.print("Pins detected as miswired or shorting to other pins: ");
-  for (int i = 0; i < 40; i++) {
+  for (int i = 1; i <= 40; i++) {
     if ((testResultShort[i] != 0) && (testResultShort[i] != 255)) {
       testPassShort = false;  // indicate test has failed
       Serial.print(testResultShort[i]);
@@ -1145,7 +1138,7 @@ void showTestResults() {
     boolean buttonClicked = false;           // detect when encoder button is clicked
     boolean showNextFault = true;            // flag for cycling displayed faults based on timer
     byte failTypeIdx = 0;                    // for error reporting 0=Opens 1=Shorts
-    testBufIdx = 0;                          // reset index pointer for scanning through test buffers
+    testBufIdx = 1;                          // reset index pointer for scanning through test buffers
 
     // display message on oled
     display.setCursor(0, textLine1);
@@ -1170,13 +1163,13 @@ void showTestResults() {
       // show the next fault when the display timer expires
       if (showNextFault) {
         if (failTypeIdx == 0) {  // if reporting open failures, check for them and show them
-          for (int i = testBufIdx; i < 40; i++) {
+          for (int i = testBufIdx; i <= 40; i++) {
             if ((testResultOpen[i] != 0) && (testResultOpen[i] != 255)) {  // if this pin has an open fault
               showNextFault = false;                                       // if a fault is found, wait for display timeout before showing next one
               display.setCursor(0, textLine3);
               display.setTextSize(1);
               display.print("Fail Open ");
-              display.print(i + 1);  // show the failed IO pin number
+              display.print(i);  // show the failed IO pin number
               display.print("   ");
               display.display();
               delay(displayDelayShort);
@@ -1184,8 +1177,8 @@ void showTestResults() {
             }
           }
           testBufIdx++;  // increment to next test buffer item
-          if (testBufIdx == 40) {
-            testBufIdx = 0;        // reset index when all open faults are reported
+          if (testBufIdx == 41) {
+            testBufIdx = 1;        // reset index when all open faults are reported
             showNextFault = true;  // all open pins were reported, show short faults or re-start opens
 
             if (!testPassShort) failTypeIdx = 1;  // switch to reporting short failures if there are any
@@ -1193,7 +1186,7 @@ void showTestResults() {
         }  // end if failTypeIdx==0
 
         if (failTypeIdx == 1) {  // if reporting short failures, check for them and show them
-          for (int i = testBufIdx; i < 40; i++) {
+          for (int i = testBufIdx; i <= 40; i++) {
             if ((testResultShort[i] != 0) && (testResultShort[i] != 255)) {  // if this pin has a short fault
               showNextFault = false;                                         // if a fault is found, wait for display timeout before showing next one
               display.setCursor(0, textLine3);
@@ -1207,8 +1200,8 @@ void showTestResults() {
             }
           }
           testBufIdx++;  // increment to next test buffer item
-          if (testBufIdx == 40) {
-            testBufIdx = 0;                      // reset index when all open faults are reported
+          if (testBufIdx == 41) {
+            testBufIdx = 1;                      // reset index when all open faults are reported
             showNextFault = true;                // all open pins were reported, show short faults or re-start opens
             if (!testPassOpen) failTypeIdx = 0;  // switch to reporting open failures if there are any
           }

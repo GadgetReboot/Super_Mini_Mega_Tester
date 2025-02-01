@@ -175,7 +175,7 @@ const int debugDelay = 1;              // delay while accessing mcp23017's to te
 
 // array elements [0..39] correspond to header test pins [1..40]
 // each element [0..39] represents a cable pin on the Output header side
-// the number contained in each element represents a pin number that a cable pin is 
+// the number contained in each element represents a pin number that a cable pin is
 // mapped to on the Input side of the cable
 // testPinMap[0] = 5  means Output pin 1 (array element 0) maps to Input pin 5
 // testPinMap[4] = 1  means Output pin 5 (array element 4) maps to Input pin 1
@@ -202,12 +202,16 @@ const byte textLine4 = 24;
 
 // Menu variables
 MenuSystem ms;
+boolean menuSelected = false;    // no menu item has been selected
 Menu mm("Rotate for Options");   // root menu text displayed
 MenuItem mm_mi1("Test 1/4 TS");  // menu choices available by moving encoder knob
 MenuItem mm_mi2("Test RJ45");
 MenuItem mm_mi3("Test RJ12");
 MenuItem mm_mi4("Test USB-C");
-boolean menuSelected = false;  // no menu item has been selected
+// example for adding more tests
+// MenuItem mm_mi5("Test 2 22 40");  // menu text for the new test
+
+
 
 void setup() {
 
@@ -233,6 +237,9 @@ void setup() {
   mm.add_item(&mm_mi2, &on_item2_selected);
   mm.add_item(&mm_mi3, &on_item3_selected);
   mm.add_item(&mm_mi4, &on_item4_selected);
+  // example for adding more tests
+  // mm.add_item(&mm_mi5, &on_item5_selected);  // function to call when a menu item is chosen
+
   ms.set_root_menu(&mm);
 
   display.setTextSize(1);
@@ -352,6 +359,23 @@ void on_item4_selected(MenuItem* p_menu_item) {
   displayMenu();  // redraw menu to current selection
 }
 
+// example for adding more tests
+/*
+void on_item5_selected(MenuItem* p_menu_item) {
+  display.clearDisplay();
+  display.setCursor(0, 1);
+  display.setTextSize(1);
+  display.print("Running Test...");
+  display.display();
+  Serial.println("Running Test...");
+
+  cableTest_2_22_40();  // run test
+
+  displayMenu();  // redraw menu to current selection
+}
+*/
+
+
 // old test function to run all 40 pins
 /*
   void on_item5_selected(MenuItem* p_menu_item) {
@@ -372,6 +396,55 @@ void on_item4_selected(MenuItem* p_menu_item) {
 /************************************
     Cable Test functions and Examples
  ************************************/
+
+// example for adding more tests
+/*
+// example test showing how to set up the pin numbers to test
+// Output header side: wires plugged into IO pins 2, 22, 40
+// Input header side: wires plugged into IO pins 2, 22, 40
+void cableTest_2_22_40() {
+
+  resetTestResults();  // clear test data arrays before starting a new test
+  resetPinMap();       // clear pin mapping before setting up a test
+
+  debugPrintTestResults();  // show how the data arrays are getting configured for debugging
+  Serial.println();
+
+  // set up a pin test mapping for header pins being tested.
+  // the output header pin is located in the square brackets eg testPinMap[0]
+  // the input header pin is after the equals sign
+  // the numbers used here must be the header pin number minus one because 
+  // the headers are numbered 1 through 40 but in software the data gets accessed as 0 to 39
+  // so testPinMap[0] = 5 would mean output header pin 1 is connected to input header pin 6
+  testPinMap[1] = 1;     // output header pin 2 connects to input header pin 2
+  testPinMap[21] = 21;   // output header pin 22 connects to input header pin 22
+  testPinMap[39] = 39;   // output header pin 40 connects to input header pin 40
+
+  debugPrintTestResults();  // show how the data arrays are getting configured for debugging
+  Serial.println();
+
+  // test mapped pins and check for shorts in addition to opens
+  Serial.print("Testing pin: ");
+  boolean testShorts = true;
+  for (int i = 0; i < 40; i++) {
+    if (testPinMap[i] != 255) {  // only test mapped pins
+      Serial.print(i + 1);
+      Serial.print(" ");
+      testPinContinuity(i, testPinMap[i], testShorts);  // test the current pin against the mapped target pin
+    }
+  }
+  Serial.println();
+  Serial.println();
+  debugPrintTestResults();  // show how the data arrays are getting configured for debugging
+  Serial.println();
+  showTestResults();  // show test results on serial monitor and oled, waiting for user to click encoder button
+  Serial.println("Test Complete");
+}
+*/
+
+
+
+
 
 // test a 2 wire Tip/Sleeve mono audio cable in a stereo TRS jack
 //     because it's a TRS jack, the 2 conductor cable will detect a connection
@@ -655,7 +728,7 @@ void testPinContinuity(byte firstPin, byte secondPin, boolean testShorts) {
       mcp2.digitalWrite(output16, LOW);  // set output low
       break;
     case 17:
-      mcp3.pinMode(output17, OUTPUT);   // set test pin as output
+      mcp3.pinMode(output17, OUTPUT);    // set test pin as output
       mcp3.digitalWrite(output17, LOW);  // set output low
       break;
     case 18:
